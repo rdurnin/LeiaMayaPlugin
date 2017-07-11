@@ -1,0 +1,12 @@
+float $f1;
+float $vfa;
+float $FoV;
+// get focalLength from CameraShape node
+$f1 = `getAttr perspShape.focalLength`;
+// get verticalFilmAperture from CameraShape node
+$vfa = `getAttr perspShape.verticalFilmAperture`;
+// caluculate FOV from two values above
+$FoV = 2.0 * atan((0.5 * $vfa) / ($f1 * 0.03937)) * 57.29578;
+// send FOV to scale.Z
+//setAttr locator_Camera.scaleZ $FoV;
+print "RD DBG: Focal length to FOV: " + $FoV + "\n";
