@@ -1,0 +1,73 @@
+global proc AELeiaCameraTemplate(string $node)
+{
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout "Camera Attributes" -collapse 0;
+    editorTemplate -addControl "focalLength";
+    editorTemplate -addControl "nearClipPlane";
+    editorTemplate -addControl "farClipPlane";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Stereo" -collapse 0;
+    editorTemplate -addControl "baselineScaling";
+    editorTemplate -addControl "focalDistance";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Display" -collapse 1;
+    editorTemplate -addControl "zeroParallaxColor";
+    editorTemplate -addControl "zeroParallaxTransparency";
+    editorTemplate -addControl "safeVolumeColor";
+    editorTemplate -addControl "safeVolumeTransparency";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Film Back" -collapse 0;
+    editorTemplate -addControl "horizontalFilmAperture";
+    editorTemplate -addControl "verticalFilmAperture";
+    editorTemplate -addControl "fieldOfView";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Outputs" -collapse 0;
+    editorTemplate -addControl "filmOffset00";
+    editorTemplate -addControl "filmOffset01";
+    editorTemplate -addControl "filmOffset02";
+    editorTemplate -addControl "filmOffset03";
+    editorTemplate -addControl "viewOffset00";
+    editorTemplate -addControl "viewOffset01";
+    editorTemplate -addControl "viewOffset02";
+    editorTemplate -addControl "viewOffset03";
+    editorTemplate -endLayout;
+
+    editorTemplate -suppress "centerCamera";
+    editorTemplate -suppress "nearClipPlaneOut";
+    editorTemplate -suppress "farClipPlaneOut";
+
+//    editorTemplate -suppress "filmOffset00";
+//    editorTemplate -suppress "filmOffset01";
+//    editorTemplate -suppress "filmOffset02";
+//    editorTemplate -suppress "filmOffset03";
+//    editorTemplate -suppress "viewOffset00";
+//    editorTemplate -suppress "viewOffset01";
+//    editorTemplate -suppress "viewOffset02";
+//    editorTemplate -suppress "viewOffset03";
+
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "frozen";
+    editorTemplate -suppress "nodeState";
+    editorTemplate -suppress "blackBox";
+    editorTemplate -suppress "rmbCommand";
+    editorTemplate -suppress "templateName";
+    editorTemplate -suppress "templatePath";
+    editorTemplate -suppress "viewName";
+    editorTemplate -suppress "iconName";
+    editorTemplate -suppress "viewMode";
+    editorTemplate -suppress "templateVersion";
+    editorTemplate -suppress "uiTreatment";
+    editorTemplate -suppress "customTreatment";
+    editorTemplate -suppress "creator";
+    editorTemplate -suppress "creationDate";
+    editorTemplate -suppress "containerType";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}
