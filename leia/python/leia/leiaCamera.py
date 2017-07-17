@@ -1,5 +1,86 @@
 
+import math
 import maya.cmds as mc
+
+
+class LeiaCamera(object):
+    def __init__(self):
+        super(LeiaCamera, self).__init__()
+
+        self._distortedFocalDistance = 0.0
+        self._distortedFieldOfView = 0.0
+        self._baseline = 0.0
+        self._screenHalfHeight = 0.0
+        self._screenHalfWidth = 0.0
+        self._disparityLimit = 0.0
+        self._focalDistanceDifference = 0.0
+        self._emissionRescalingFactor = 0.0
+
+    @property
+    def filmOffset00(self):
+        return (-self.viewOffset00 / self._screenHalfWidth)
+
+    @property
+    def filmOffset01(self):
+        return (-self.viewOffset01 / self._screenHalfWidth)
+
+    @property
+    def filmOffset02(self):
+        return (-self.viewOffset02 / self._screenHalfWidth)
+
+    @property
+    def filmOffset03(self):
+        return (-self.viewOffset03 / self._screenHalfWidth)
+
+    @property
+    def viewOffset00(self):
+        return (self._emissionRescalingFactor * -0.24)
+
+    @property
+    def viewOffset01(self):
+        return (self._emissionRescalingFactor * -0.08)
+
+    @property
+    def viewOffset02(self):
+        return (self._emissionRescalingFactor * 0.08)
+
+    @property
+    def viewOffset03(self):
+        return (self._emissionRescalingFactor * 0.24)
+
+    @staticmethod
+    def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, perspectiveScaling,
+                            maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
+        lcam = LeiaCamera()
+        lcam._distortedFocalDistance = focalDistance / perspectiveScaling
+        lcam._distortedFieldOfView = math.atan(perspectiveScaling * math.tan(fieldOfView * math.pi / 360.0)) * 360.0 / math.pi
+        lcam._baseline = deltaView * lcam._distortedFocalDistance * baselineScaling
+        lcam._screenHalfHeight = focalDistance * math.tan(fieldOfView * math.pi / 360.0)
+        lcam._screenHalfWidth = screenWidth / screenHeight * lcam._screenHalfHeight
+        lcam._disparityLimit = 2.0 * maxDisparity * lcam._screenHalfWidth / tileResX
+        lcam._focalDistanceDifference = focalDistance - lcam._distortedFocalDistance
+        lcam._emissionRescalingFactor = baselineScaling * lcam._distortedFocalDistance
+
+        return lcam
+
+class LeiaCameraBounds(object):
+    def __init__(self):
+        super(LeiaCameraBounds, self).__init__()
+
+        self._screen = []
+        self._north = []
+        self._south = []
+        self._top = []
+        self._bottom = []
+        self._east = []
+        self._west = []
+
+    @staticmethod
+    def computeLeiaCameraBounds( ):
+        lbounds = LeiaCameraBounds()
+
+        return lbounds
+
 
 def __createSlaveCamera(masterShape, leia, name, parent):
     slave = mc.camera()[0]
@@ -68,8 +149,7 @@ def createLeiaCameraRig(baseName='leiaCamera'):
     root = mc.createNode('LeiaCameraTransform', name=baseName)
     rootName = root.split('|')[-1]
 
-    leia = mc.createNode('LeiaCamera', name=root + "Shape")
-    mc.connectAttr(leia + ".message", root + ".leiaCamera")
+    leia = mc.createNode('LeiaCamera', parent=root, name=root + "Shape")
 
     centerCam = mc.camera()[0]
     centerCam = mc.rename(centerCam, baseName + '_Center')
@@ -136,3 +216,22 @@ def createLeiaCameraRig(baseName='leiaCamera'):
 
     mc.select(root)
     return root
+
+# var focalLength: float = viewHeight / (2.0 * Mathf.Tan(0.5 * fov * Mathf.Deg2Rad);
+
+def convertFovToFocalLength(fov, verticalFilmAperture):
+    return (verticalFilmAperture / (2.0 * math.tan(0.5 * fieldOfView * math.pi / 180)))
+
+# var fov: float = Mathf.Rad2Deg * 2.0 * Math.Atan(viewHeight / (2.0 * focalLength));
+
+def convertFocalLengthToFov(focalLength, verticalFilmAperture):
+    return (2.0 * math.atan((0.5 * verticalFilmAperture) / (focalLength * 0.03937)) * 57.29578)
+
+def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, perspectiveScaling,
+                        maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
+
+    return LeiaCamera.computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, perspectiveScaling,
+                                            maxDisparity, deltaView, screenWidth, screenHeight, tileResX)
+
+def computeLeiaCameraBounds( ):
+    return LeiaCameraBounds.computeLeiaCameraBounds()
