@@ -499,7 +499,7 @@ class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
 
     def supportedDrawAPIs(self):
         ## this plugin supports both GL and DX
-        return OpenMaya.MRenderer.kOpenGL | OpenMaya.MRenderer.kDirectX11 | OpenMaya.MRenderer.kOpenGLCoreProfile
+        return OpenMaya.MRenderer.kOpenGL | OpenMaya.MRenderer.kDirectX11
 
     def isBounded(self, mobject, cameraPath):
         return True
