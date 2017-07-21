@@ -17,6 +17,30 @@ class LeiaCamera(object):
         self._emissionRescalingFactor = 0.0
 
     @property
+    def baseline(self):
+        return self._baseline
+
+    @property
+    def disparityLimit(self):
+        return self._disparityLimit
+
+    @property
+    def distortedFocalDistance(self):
+        return self._distortedFocalDistance
+
+    @property
+    def screenHalfWidth(self):
+        return self._screenHalfWidth
+
+    @property
+    def screenHalfHeight(self):
+        return self._screenHalfHeight
+
+    @property
+    def emissionRescalingFactor(self):
+        return self._emissionRescalingFactor
+
+    @property
     def filmOffset00(self):
         return (-self.viewOffset00 / self._screenHalfWidth)
 
@@ -67,17 +91,65 @@ class LeiaCameraBounds(object):
     def __init__(self):
         super(LeiaCameraBounds, self).__init__()
 
-        self._screen = []
-        self._north = []
-        self._south = []
-        self._top = []
-        self._bottom = []
-        self._east = []
-        self._west = []
+        self._nearTopLeft = 0.0
+        self._nearTopRight = 0.0
+        self._nearBottomLeft = 0.0
+        self._nearBottomRight = 0.0
+
+        self._farTopLeft = 0.0
+        self._farTopRight = 0.0
+        self._farBottomLeft = 0.0
+        self._farBottomRight = 0.0
+
+        self._screenTopLeft = 0.0
+        self._screenTopRight = 0.0
+        self._screenBottomLeft = 0.0
+        self._screenBottomRight = 0.0
+
+    @property
+    def screen(self):
+        return ((screenTopLeft, screenTopRight, screenBottomRight, screenBottomLeft))
+
+    @property
+    def south(self):
+        return ((nearTopLeft, nearTopRight, nearBottomRight, nearBottomLeft))
+
+    @property
+    def north(self):
+        return ((farTopLeft, farTopRight, farBottomRight, farBottomLeft))
+
+    @property
+    def top(self):
+        return ((nearTopLeft, nearTopRight, farTopRight, farTopLeft))
+
+    @property
+    def bottom(self):
+        return ((nearBottomLeft, nearBottomRight, farBottomRight, farBottomLeft))
+
+    @property
+    def east(self):
+        return ((nearTopRight, nearBottomRight, farBottomRight, farTopRight))
+
+    @property
+    def west(self):
+        return ((nearTopLeft, nearBottomLeft, farBottomLeft, farTopLeft))
 
     @staticmethod
-    def computeLeiaCameraBounds( ):
+    def computeLeiaCameraBounds(screenHalfWidth, screenHalfHeight,
+                                distortedFocalDistance, disparityLimit,
+                                baseline, focalDistance):
+
         lbounds = LeiaCameraBounds()
+
+        lbounds._screenTopLeft = (-screenHalfWidth, screenHalfHeight, focalDistance)
+        lbounds._screenTopRight = (screenHalfWidth, screenHalfHeight, focalDistance)
+        lbounds._screenBottomLeft = (-screenHalfWidth, -screenHalfHeight, focalDistance)
+        lbounds._screenBottomRight = (screenHalfWidth, -screenHalfHeight, focalDistance)
+
+        distortedNearZ = math.max(0.0, baseline * distortedFocalDistance / (baseline + disparityLimit))
+        nearPlaneZ = distortedNearZ - distortedFocalDistance + focalDistance
+        nearRatio = distortedNearZ / distortedFocalDistance
+        nearShiftRatio = 1.0 - nearRatio
 
         return lbounds
 
