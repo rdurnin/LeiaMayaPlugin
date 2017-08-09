@@ -568,22 +568,22 @@ class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
 def triangles(l):
     t = OpenMaya.MPointArray()
 
-    t.append(l[0])
-    t.append(l[1])
-    t.append(l[2])
-    t.append(l[0])
-    t.append(l[2])
-    t.append(l[3])
+    t.append(OpenMaya.MPoint(l[0]))
+    t.append(OpenMaya.MPoint(l[1]))
+    t.append(OpenMaya.MPoint(l[2]))
+    t.append(OpenMaya.MPoint(l[0]))
+    t.append(OpenMaya.MPoint(l[2]))
+    t.append(OpenMaya.MPoint(l[3]))
 
     return t
 
 def quad(l):
     t = OpenMaya.MPointArray()
 
-    t.append(l[0])
-    t.append(l[1])
-    t.append(l[2])
-    t.append(l[3])
+    t.append(OpenMaya.MPoint(l[0]))
+    t.append(OpenMaya.MPoint(l[1]))
+    t.append(OpenMaya.MPoint(l[2]))
+    t.append(OpenMaya.MPoint(l[3]))
 
     return t
 

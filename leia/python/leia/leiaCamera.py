@@ -73,8 +73,7 @@ class LeiaCamera(object):
         return (self._emissionRescalingFactor * 0.24)
 
     @staticmethod
-    def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, perspectiveScaling,
-                            maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
+    def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
 
         lcam = LeiaCamera()
         lcam._distortedFocalDistance = focalDistance / perspectiveScaling
