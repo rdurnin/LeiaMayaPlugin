@@ -20,7 +20,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
     aCenterCamera = OpenMaya.MObject()
 
     aFocalLength = OpenMaya.MObject()
-    aFieldOfView = OpenMaya.MObject()
     aNearClipPlane = OpenMaya.MObject()
     aFarClipPlane = OpenMaya.MObject()
 
@@ -30,18 +29,23 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
     aHFilmAperture = OpenMaya.MObject()
     aVFilmAperture = OpenMaya.MObject()
 
+    aBaseline = OpenMaya.MObject()
+    aDisparityLimit = OpenMaya.MObject()
+
     aZeroParallaxColor = OpenMaya.MObject()
     aZeroParallaxTransparency = OpenMaya.MObject()
     aSafeVolumeColor = OpenMaya.MObject()
     aSafeVolumeTransparency = OpenMaya.MObject()
 
-    aNearClipPlaneOut = OpenMaya.MObject()
-    aFarClipPlaneOut = OpenMaya.MObject()
-
-    aBaseline = OpenMaya.MObject()
+    aNearZ = OpenMaya.MObject()
+    aNearHalfWidth = OpenMaya.MObject()
+    aNearHalfHeight = OpenMaya.MObject()
+    aScreenZ = OpenMaya.MObject()
     aScreenHalfWidth = OpenMaya.MObject()
     aScreenHalfHeight = OpenMaya.MObject()
-    aDisparityLimit = OpenMaya.MObject()
+    aFarZ = OpenMaya.MObject()
+    aFarHalfWidth = OpenMaya.MObject()
+    aFarHalfHeight = OpenMaya.MObject()
 
     aFilmOffset00 = OpenMaya.MObject()
     aFilmOffset01 = OpenMaya.MObject()
@@ -73,25 +77,7 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         if plug.isNull:
             return OpenMayaUI.MPxLocatorNode.compute(self, plug, data)
 
-        if (plug == self.aFieldOfView):
-            flData = data.inputValue(LeiaCameraNode.aFocalLength)
-            vfData = data.inputValue(LeiaCameraNode.aVFilmAperture)
-
-            focalLength = flData.asFloat()
-            verticalFilmAperture = vfData.asFloat()
-
-            if not (focalLength > 0.001):
-                return OpenMayaUI.MPxLocatorNode.compute(self, plug, data)
-
-            fov = leia.leiaCamera.convertFocalLengthToFov(focalLength, verticalFilmAperture)
-            fovOut = data.outputValue(LeiaCameraNode.aFieldOfView)
-            fovOut.setFloat(fov)
-
-            data.setClean(plug)
-
-        if ((plug == self.aNearClipPlaneOut)
-        or  (plug == self.aFarClipPlaneOut)
-        or  (plug == self.aFilmOffset00)
+        if ((plug == self.aFilmOffset00)
         or  (plug == self.aFilmOffset01)
         or  (plug == self.aFilmOffset02)
         or  (plug == self.aFilmOffset03)
@@ -99,13 +85,15 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         or  (plug == self.aViewOffset01)
         or  (plug == self.aViewOffset02)
         or  (plug == self.aViewOffset03)):
-            fvData = data.inputValue(LeiaCameraNode.aFieldOfView)
-            fdData = data.inputValue(LeiaCameraNode.aFocalDistance)
             blData = data.inputValue(LeiaCameraNode.aBaselineScaling)
+            fdData = data.inputValue(LeiaCameraNode.aFocalDistance)
+            flData = data.inputValue(LeiaCameraNode.aFocalLength)
+            hfData = data.inputValue(LeiaCameraNode.aHFilmAperture)
 
-            fieldOfView = fvData.asFloat()
-            focalDistance = fdData.asFloat()
             baselineScaling = blData.asFloat()
+            focalDistance = fdData.asFloat()
+            focalLength = flData.asFloat()
+            horizontalFilmAperture = hfData.asFloat()
             maxDisparity = 5.0
             deltaView = 0.133
             screenWidth = 2560.0
@@ -113,8 +101,8 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
             tileResX = 640.0
 
             try:
-                lcam = leia.leiaCamera.computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, maxDisparity, deltaView, 
-                                                                                            screenWidth, screenHeight, tileResX)
+                lcam = leia.leiaCamera.computeLeiaCamera(horizontalFilmAperture, focalLength, focalDistance, baselineScaling,
+                                                                    maxDisparity, deltaView, screenWidth, screenHeight, tileResX)
 
             except:
                 error("Failed to compute LeiaCamera")
@@ -124,10 +112,27 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
             aBaseline.setFloat(lcam.baseline)
             aDisparityLimit = data.outputValue(LeiaCameraNode.aDisparityLimit)
             aDisparityLimit.setFloat(lcam.disparityLimit)
+
+            aNearZ = data.outputValue(LeiaCameraNode.aNearZ)
+            aNearZ.setFloat(lcam.nearZ)
+            aNearHalfWidth = data.outputValue(LeiaCameraNode.aNearHalfWidth)
+            aNearHalfWidth.setFloat(lcam.nearHalfWidth)
+            aNearHalfHeight = data.outputValue(LeiaCameraNode.aNearHalfHeight)
+            aNearHalfHeight.setFloat(lcam.nearHalfHeight)
+
+            aScreenZ = data.outputValue(LeiaCameraNode.aScreenZ)
+            aScreenZ.setFloat(lcam.screenZ)
             aScreenHalfWidth = data.outputValue(LeiaCameraNode.aScreenHalfWidth)
             aScreenHalfWidth.setFloat(lcam.screenHalfWidth)
             aScreenHalfHeight = data.outputValue(LeiaCameraNode.aScreenHalfHeight)
             aScreenHalfHeight.setFloat(lcam.screenHalfHeight)
+
+            aFarZ = data.outputValue(LeiaCameraNode.aFarZ)
+            aFarZ.setFloat(lcam.farZ)
+            aFarHalfWidth = data.outputValue(LeiaCameraNode.aFarHalfWidth)
+            aFarHalfWidth.setFloat(lcam.farHalfWidth)
+            aFarHalfHeight = data.outputValue(LeiaCameraNode.aFarHalfHeight)
+            aFarHalfHeight.setFloat(lcam.farHalfHeight)
 
             aFilmOffset00 = data.outputValue(LeiaCameraNode.aFilmOffset00)
             aFilmOffset00.setFloat(lcam.filmOffset00)
@@ -171,16 +176,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         _num_Attr.setSoftMin(2.5)
         _num_Attr.setSoftMax(3500.0)
         LeiaCameraNode.addAttribute(LeiaCameraNode.aFocalLength)
-
-        LeiaCameraNode.aFieldOfView = _num_Attr.create("fieldOfView", "fov", OpenMaya.MFnNumericData.kFloat, 0.0)
-        _num_Attr.keyable = False
-        _num_Attr.readable = True
-        _num_Attr.writable = False
-        _num_Attr.storable = False
-        _num_Attr.hidden = False
-        _num_Attr.setSoftMin(1.0)
-        _num_Attr.setSoftMax(179.0)
-        LeiaCameraNode.addAttribute(LeiaCameraNode.aFieldOfView)
 
         LeiaCameraNode.aNearClipPlane = _num_Attr.create("nearClipPlane", "ncp", OpenMaya.MFnNumericData.kFloat, 0.1)
         _num_Attr.keyable = False
@@ -238,20 +233,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         _num_Attr.setSoftMax(1.0)
         LeiaCameraNode.addAttribute(LeiaCameraNode.aSafeVolumeTransparency)
 
-        LeiaCameraNode.aNearClipPlaneOut = _num_Attr.create("nearClipPlaneOut", "ncpo", OpenMaya.MFnNumericData.kFloat, 0.1)
-        _num_Attr.keyable = False
-        _num_Attr.writable = False
-        _num_Attr.hidden = True
-        _num_Attr.storable = False
-        LeiaCameraNode.addAttribute(LeiaCameraNode.aNearClipPlaneOut)
-
-        LeiaCameraNode.aFarClipPlaneOut = _num_Attr.create("farClipPlaneOut", "fcpo", OpenMaya.MFnNumericData.kFloat, 1000.0)
-        _num_Attr.keyable = False
-        _num_Attr.writable = False
-        _num_Attr.hidden = True
-        _num_Attr.storable = False
-        LeiaCameraNode.addAttribute(LeiaCameraNode.aFarClipPlaneOut)
-
         LeiaCameraNode.aBaseline = _num_Attr.create("baseline", "b", OpenMaya.MFnNumericData.kFloat)
         _num_Attr.keyable = False
         _num_Attr.writable = False
@@ -266,6 +247,34 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         _num_Attr.storable = False
         LeiaCameraNode.addAttribute(LeiaCameraNode.aDisparityLimit)
 
+        LeiaCameraNode.aNearZ = _num_Attr.create("nearZ", "nz", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aNearZ)
+
+        LeiaCameraNode.aNearHalfWidth = _num_Attr.create("nearHalfWidth", "nhw", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aNearHalfWidth)
+
+        LeiaCameraNode.aNearHalfHeight = _num_Attr.create("nearHalfHeight", "nhh", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aNearHalfHeight)
+
+        LeiaCameraNode.aScreenZ = _num_Attr.create("screenZ", "sz", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aScreenZ)
+
         LeiaCameraNode.aScreenHalfWidth = _num_Attr.create("screenHalfWidth", "shw", OpenMaya.MFnNumericData.kFloat)
         _num_Attr.keyable = False
         _num_Attr.writable = False
@@ -279,6 +288,27 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         _num_Attr.hidden = True
         _num_Attr.storable = False
         LeiaCameraNode.addAttribute(LeiaCameraNode.aScreenHalfHeight)
+
+        LeiaCameraNode.aFarZ = _num_Attr.create("farZ", "fz", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aFarZ)
+
+        LeiaCameraNode.aFarHalfWidth = _num_Attr.create("farHalfWidth", "fhw", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aFarHalfWidth)
+
+        LeiaCameraNode.aFarHalfHeight = _num_Attr.create("farHalfHeight", "fhh", OpenMaya.MFnNumericData.kFloat)
+        _num_Attr.keyable = False
+        _num_Attr.writable = False
+        _num_Attr.hidden = True
+        _num_Attr.storable = False
+        LeiaCameraNode.addAttribute(LeiaCameraNode.aFarHalfHeight)
 
         LeiaCameraNode.aFilmOffset00 = _num_Attr.create("filmOffset00", "fo00", OpenMaya.MFnNumericData.kFloat, 0.0)
         _num_Attr.writable = False
@@ -336,11 +366,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         _num_Attr.storable = False
         LeiaCameraNode.addAttribute(LeiaCameraNode.aViewOffset03)
 
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aFieldOfView)
-
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aNearClipPlane, LeiaCameraNode.aNearClipPlaneOut)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFarClipPlane, LeiaCameraNode.aFarClipPlaneOut)
-
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aFilmOffset00)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aFilmOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aFilmOffset02)
@@ -349,12 +374,7 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aViewOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aViewOffset03)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aBaseline)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aDisparityLimit)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aScreenHalfWidth)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalLength, LeiaCameraNode.aScreenHalfHeight)
 
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aFieldOfView)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aFilmOffset00)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aFilmOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aFilmOffset02)
@@ -363,12 +383,7 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aViewOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aViewOffset03)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aBaseline)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aDisparityLimit)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aScreenHalfWidth)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aHFilmAperture, LeiaCameraNode.aScreenHalfHeight)
 
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aFieldOfView)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aFilmOffset00)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aFilmOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aFilmOffset02)
@@ -377,10 +392,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aViewOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aViewOffset03)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aBaseline)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aDisparityLimit)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aScreenHalfWidth)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aVFilmAperture, LeiaCameraNode.aScreenHalfHeight)
 
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aFilmOffset00)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aFilmOffset01)
@@ -390,10 +401,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aViewOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aViewOffset03)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aBaseline)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aDisparityLimit)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aScreenHalfWidth)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aBaselineScaling, LeiaCameraNode.aScreenHalfHeight)
 
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aFilmOffset00)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aFilmOffset01)
@@ -403,10 +410,6 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aViewOffset01)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aViewOffset03)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aBaseline)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aDisparityLimit)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aScreenHalfWidth)
-        LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aScreenHalfHeight)
 
 class LeiaCameraUserData(OpenMaya.MUserData):
     def __init__(self):
@@ -415,11 +418,17 @@ class LeiaCameraUserData(OpenMaya.MUserData):
         self.fZeroParallaxColor = OpenMaya.MColor()
         self.fSafeVolumeColor = OpenMaya.MColor()
 
+        self.fNearZ = 0.0
+        self.fNearHalfWidth = 0.0
+        self.fNearHalfHeight = 0.0
+
+        self.fScreenZ = 0.0
         self.fScreenHalfWidth = 0.0
         self.fScreenHalfHeight = 0.0
-        self.fDisparityLimit = 0.0
-        self.fBaseline = 0.0
-        self.fFocalDistance = 0.0
+
+        self.fFarZ = 0.0
+        self.fFarHalfWidth = 0.0
+        self.fFarHalfHeight = 0.0
 
 class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
     def __init__(self, mobject):
@@ -465,6 +474,22 @@ class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
         if not plug.isNull:
             data.fZeroParallaxColor.a = 1.0 - plug.asFloat()
 
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aNearZ)
+        if not plug.isNull:
+            data.fNearZ = plug.asFloat()
+
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aNearHalfWidth)
+        if not plug.isNull:
+            data.fNearHalfWidth = plug.asFloat()
+
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aNearHalfHeight)
+        if not plug.isNull:
+            data.fNearHalfHeight = plug.asFloat()
+
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aScreenZ)
+        if not plug.isNull:
+            data.fScreenZ = plug.asFloat()
+
         plug = OpenMaya.MPlug(node, LeiaCameraNode.aScreenHalfWidth)
         if not plug.isNull:
             data.fScreenHalfWidth = plug.asFloat()
@@ -473,17 +498,17 @@ class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
         if not plug.isNull:
             data.fScreenHalfHeight = plug.asFloat()
 
-        plug = OpenMaya.MPlug(node, LeiaCameraNode.aDisparityLimit)
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aFarZ)
         if not plug.isNull:
-            data.fDisparityLimit = plug.asFloat()
+            data.fFarZ = plug.asFloat()
 
-        plug = OpenMaya.MPlug(node, LeiaCameraNode.aBaseline)
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aFarHalfWidth)
         if not plug.isNull:
-            data.fBaseline = plug.asFloat()
+            data.fFarHalfWidth = plug.asFloat()
 
-        plug = OpenMaya.MPlug(node, LeiaCameraNode.aFocalDistance)
+        plug = OpenMaya.MPlug(node, LeiaCameraNode.aFarHalfHeight)
         if not plug.isNull:
-            data.fFocalDistance = plug.asFloat()
+            data.fFarHalfHeight = plug.asFloat()
 
         return data
 
@@ -495,8 +520,9 @@ class LeiaCameraDrawOverride(OpenMayaRender.MPxDrawOverride):
             return
 
         try:
-            lbounds = leia.leiaCamera.computeLeiaCameraBounds(data.fScreenHalfWidth, data.fScreenHalfHeight,
-                                                                data.fDisparityLimit, data.fBaseline, data.fFocalDistance)
+            lbounds = leia.leiaCamera.computeLeiaCameraBounds(data.fNearHalfWidth, data.fNearHalfHeight, data.fNearZ,
+                                                                data.fScreenHalfWidth, data.fScreenHalfHeight, data.fScreenZ,
+                                                                data.fFarHalfWidth, data.fFarHalfHeight, data.fFarZ)
 
         except:
             error("Failed to compute LeiaCameraBounds")

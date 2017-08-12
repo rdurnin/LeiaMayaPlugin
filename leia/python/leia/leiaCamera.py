@@ -7,10 +7,17 @@ class LeiaCamera(object):
         super(LeiaCamera, self).__init__()
 
         self._baseline = 0.0
+        self._disparityLimit = 0.0
+        self._normalizedShift = 0.0
+        self._nearZ = 0.0
+        self._nearHalfHeight = 0.0
+        self._nearHalfWidth = 0.0
+        self._screenZ = 0.0
         self._screenHalfHeight = 0.0
         self._screenHalfWidth = 0.0
-        self._disparityLimit = 0.0
-        self._focalDistanceDifference = 0.0
+        self._farZ = 0.0
+        self._farHalfHeight = 0.0
+        self._farHalfWidth = 0.0
 
     @property
     def baseline(self):
@@ -21,6 +28,22 @@ class LeiaCamera(object):
         return self._disparityLimit
 
     @property
+    def nearZ(self):
+        return self._nearZ
+
+    @property
+    def nearHalfWidth(self):
+        return self._nearHalfWidth
+
+    @property
+    def nearHalfHeight(self):
+        return self._nearHalfHeight
+
+    @property
+    def screenZ(self):
+        return self._screenZ
+
+    @property
     def screenHalfWidth(self):
         return self._screenHalfWidth
 
@@ -29,20 +52,32 @@ class LeiaCamera(object):
         return self._screenHalfHeight
 
     @property
+    def farZ(self):
+        return self._farZ
+
+    @property
+    def farHalfWidth(self):
+        return self._farHalfWidth
+
+    @property
+    def farHalfHeight(self):
+        return self._farHalfHeight
+
+    @property
     def filmOffset00(self):
-        return (-self.viewOffset00 / 25.4)
+        return (-self.viewOffset00 * self._normalizedShift)
 
     @property
     def filmOffset01(self):
-        return (-self.viewOffset01 / 25.4)
+        return (-self.viewOffset01 * self._normalizedShift)
 
     @property
     def filmOffset02(self):
-        return (-self.viewOffset02 / 25.4)
+        return (-self.viewOffset02 * self._normalizedShift)
 
     @property
     def filmOffset03(self):
-        return (-self.viewOffset03 / 25.4)
+        return (-self.viewOffset03 * self._normalizedShift)
 
     @property
     def viewOffset00(self):
@@ -61,14 +96,26 @@ class LeiaCamera(object):
         return (self._baseline * 1.5)
 
     @staticmethod
-    def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, maxDisparity, deltaView,
-                                                            screenWidth, screenHeight, tileResX):
+    def computeLeiaCamera(horizontalFilmAperture, focalLength, focalDistance, baselineScaling,
+                                    maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
 
         lcam = LeiaCamera()
         lcam._baseline = deltaView * focalDistance * baselineScaling
-        lcam._screenHalfHeight = focalDistance * math.tan(fieldOfView * math.pi / 360.0)
-        lcam._screenHalfWidth = screenWidth / screenHeight * lcam._screenHalfHeight
+        lcam._normalizedShift = focalLength / (25.4 * focalDistance)
+
+        lcam._screenZ = focalDistance
+        lcam._screenHalfWidth = 25.4 * horizontalFilmAperture * focalDistance / (2.0 * focalLength)
+        lcam._screenHalfHeight = lcam._screenHalfWidth / (screenWidth / screenHeight)
+
         lcam._disparityLimit = 2.0 * maxDisparity * lcam._screenHalfWidth / tileResX
+
+        lcam._nearZ = -(max(0.0, lcam._baseline * focalDistance / (lcam._baseline + lcam._disparityLimit)))
+        lcam._nearHalfWidth = 25.4 * horizontalFilmAperture * lcam._nearZ / (2.0 * focalLength)
+        lcam._nearHalfHeight = lcam._screenHalfWidth / (screenWidth / screenHeight)
+
+        lcam._farZ = -(lcam._baseline * focalDistance / (lcam._baseline - lcam._disparityLimit) if (lcam._baseline > lcam._disparityLimit) else 20000.0)
+        lcam._farHalfWidth = 25.4 * horizontalFilmAperture * lcam._farZ / (2.0 * focalLength)
+        lcam._farHalfHeight = lcam._screenHalfWidth / (screenWidth / screenHeight)
 
         return lcam
 
@@ -120,29 +167,26 @@ class LeiaCameraBounds(object):
         return ((self._nearTopLeft, self._nearBottomLeft, self._farBottomLeft, self._farTopLeft))
 
     @staticmethod
-    def computeLeiaCameraBounds(screenHalfWidth, screenHalfHeight, disparityLimit,
-                                                            baseline, focalDistance):
+    def computeLeiaCameraBounds(nearHalfWidth, nearHalfHeight, nearZ,
+                                screenHalfWidth, screenHalfHeight, screenZ,
+                                farHalfWidth, farHalfHeight, farZ):
 
         lbounds = LeiaCameraBounds()
 
-        lbounds._screenTopLeft = (-screenHalfWidth, screenHalfHeight, -focalDistance)
-        lbounds._screenTopRight = (screenHalfWidth, screenHalfHeight, -focalDistance)
-        lbounds._screenBottomLeft = (-screenHalfWidth, -screenHalfHeight, -focalDistance)
-        lbounds._screenBottomRight = (screenHalfWidth, -screenHalfHeight, -focalDistance)
+        lbounds._nearTopLeft = (-nearHalfWidth, nearHalfHeight, nearZ)
+        lbounds._nearTopRight = (nearHalfWidth, nearHalfHeight, nearZ)
+        lbounds._nearBottomLeft = (-nearHalfWidth, -nearHalfHeight, nearZ)
+        lbounds._nearBottomRight = (nearHalfWidth, -nearHalfHeight, nearZ)
 
-        nearPlaneZ = -(min(0.0, baseline * focalDistance / (baseline + disparityLimit)))
+        lbounds._screenTopLeft = (-screenHalfWidth, screenHalfHeight, -screenZ)
+        lbounds._screenTopRight = (screenHalfWidth, screenHalfHeight, -screenZ)
+        lbounds._screenBottomLeft = (-screenHalfWidth, -screenHalfHeight, -screenZ)
+        lbounds._screenBottomRight = (screenHalfWidth, -screenHalfHeight, -screenZ)
 
-        lbounds._nearTopLeft = (-screenHalfWidth, screenHalfHeight, nearPlaneZ)
-        lbounds._nearTopRight = (screenHalfWidth, screenHalfHeight, nearPlaneZ)
-        lbounds._nearBottomLeft = (-screenHalfWidth, -screenHalfHeight, nearPlaneZ)
-        lbounds._nearBottomRight = (screenHalfWidth, -screenHalfHeight, nearPlaneZ)
-
-        farPlaneZ = -(baseline * focalDistance / (baseline - disparityLimit) if (baseline > disparityLimit) else 20000.0)
-
-        lbounds._farTopLeft = (-screenHalfWidth, screenHalfHeight, farPlaneZ)
-        lbounds._farTopRight = (screenHalfWidth, screenHalfHeight, farPlaneZ)
-        lbounds._farBottomLeft = (-screenHalfWidth, -screenHalfHeight, farPlaneZ)
-        lbounds._farBottomRight = (screenHalfWidth, -screenHalfHeight, farPlaneZ)
+        lbounds._farTopLeft = (-farHalfWidth, farHalfHeight, farZ)
+        lbounds._farTopRight = (farHalfWidth, farHalfHeight, farZ)
+        lbounds._farBottomLeft = (-farHalfWidth, -farHalfHeight, farZ)
+        lbounds._farBottomRight = (farHalfWidth, -farHalfHeight, farZ)
 
         return lbounds
 
@@ -173,7 +217,7 @@ def __createSlaveCamera(masterShape, leia, name, parent):
     for attr in ['nearClipPlane',
                 'farClipPlane']:
         slaveAttr = slaveShape + '.' + attr
-        leiaAttr = leia + '.' + attr + 'Out'
+        leiaAttr = leia + '.' + attr
         mc.connectAttr(leiaAttr, slaveAttr)
         mc.setAttr(slaveAttr, keyable=False)
 
@@ -183,25 +227,6 @@ def __createSlaveCamera(masterShape, leia, name, parent):
         mc.setAttr(slave + '.' + attr, keyable=False)
 
     return slave
-
-def __createFrustumNode(mainCam, parent, baseName):
-    frustum = mc.createNode('LeiaCameraFrustum', name=baseName, parent=parent)
-    for attr in ['localPositionX', 'localPositionY', 'localPositionZ',
-                'localScaleX', 'localScaleY', 'localScaleZ']:
-        mc.setAttr(frustum + '.' + attr, channelBox=False)
-
-    for attr in ['displayNearClip', 'displayFarClip', 'displayFrustum',
-               'zeroParallaxPlane',
-               'zeroParallaxTransparency',
-               'zeroParallaxColor',
-               'safeViewingVolume',
-               'safeVolumeTransparency',
-               'safeVolumeColor',
-               'safeStereo',
-               'zeroParallax'] :
-        mc.connectAttr(mainCam + '.' + attr, frustum + '.' + attr)
-
-    return frustum
 
 def __disableTransformNode(xform, ignored=[]):
     for attr in ['translateX', 'translateY', 'translateZ',
@@ -256,18 +281,16 @@ def createLeiaCameraRig(baseName='leiaCamera'):
     mc.select(root)
     return root
 
-def convertFovToFocalLength(fov, verticalFilmAperture):
-    return (verticalFilmAperture / (2.0 * math.tan(0.5 * fieldOfView * math.pi / 180)))
+def computeLeiaCamera(horizontalFilmAperture, focalLength, focalDistance, baselineScaling,
+                                maxDisparity, deltaView, screenWidth, screenHeight, tileResX):
 
-def convertFocalLengthToFov(focalLength, verticalFilmAperture):
-    return (2.0 * math.atan((0.5 * verticalFilmAperture) / (focalLength * 0.03937)) * 57.29578)
+    return LeiaCamera.computeLeiaCamera(horizontalFilmAperture, focalLength, focalDistance, baselineScaling,
+                                                    maxDisparity, deltaView, screenWidth, screenHeight, tileResX)
 
-def computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, maxDisparity, deltaView,
-                                                        screenWidth, screenHeight, tileResX):
+def computeLeiaCameraBounds(nearHalfWidth, nearHalfHeight, nearZ,
+                            screenHalfWidth, screenHalfHeight, screenZ,
+                            farHalfWidth, farHalfHeight, farZ):
 
-    return LeiaCamera.computeLeiaCamera(fieldOfView, focalDistance, baselineScaling, maxDisparity, deltaView,
-                                                                            screenWidth, screenHeight, tileResX)
-
-def computeLeiaCameraBounds(screenHalfWidth, screenHalfHeight, disparityLimit, baseline, focalDistance):
-
-    return LeiaCameraBounds.computeLeiaCameraBounds(screenHalfWidth, screenHalfHeight,  disparityLimit, baseline, focalDistance)
+    return LeiaCameraBounds.computeLeiaCameraBounds(nearHalfWidth, nearHalfHeight, nearZ,
+                                                    screenHalfWidth, screenHalfHeight, screenZ,
+                                                    farHalfWidth, farHalfHeight, farZ)

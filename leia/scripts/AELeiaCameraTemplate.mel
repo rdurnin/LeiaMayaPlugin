@@ -39,8 +39,6 @@ global proc AELeiaCameraTemplate(string $node)
     editorTemplate -endLayout;
 
     editorTemplate -suppress "centerCamera";
-    editorTemplate -suppress "nearClipPlaneOut";
-    editorTemplate -suppress "farClipPlaneOut";
 
 //    editorTemplate -suppress "filmOffset00";
 //    editorTemplate -suppress "filmOffset01";
