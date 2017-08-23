@@ -8,8 +8,11 @@ import leia
 kPluginNodeName = "LeiaCamera"
 kPluginNodeID = OpenMaya.MTypeId(0x6368600)
 
-kDrawDbClassification =  "drawdb/geometry/LeiaCameraNode"
-kDrawRegistrantId = "LeiaCameraNodePlugin"
+kPluginManipName = "LeiaCameraManipulator"
+kPluginManipId = OpenMaya.MTypeId(0x6368606)
+
+kDrawDbClassification =  "drawdb/geometry/LeiaCamera"
+kDrawRegistrantId = "LeiaCameraPlugin"
 
 def maya_useNewAPI( ):
     pass
@@ -411,6 +414,10 @@ class LeiaCameraNode(OpenMayaUI.MPxLocatorNode):
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aViewOffset02)
         LeiaCameraNode.attributeAffects(LeiaCameraNode.aFocalDistance, LeiaCameraNode.aViewOffset03)
 
+# class LeiaCameraManipulator(OpenMayaMPx.MPxManipContainer):
+#     def __init__(self):
+#         super(LeiaCameraManipulator, self).__init__()
+
 class LeiaCameraUserData(OpenMaya.MUserData):
     def __init__(self):
         super(LeiaCameraUserData, self).__init__(False)
@@ -598,6 +605,14 @@ def initializePlugin(mobject):
     except:
         error("Failed to register node")
         raise
+
+    # try:
+    #     mplugin.registerNode(kPluginManipName, kPluginManipId,
+    #                         LeiaCameraManip.create, LeiaCameraManip.initialize,
+    #                         OpenMayaMPx.MPxNode.kManipContainer)
+    # except:
+    #     error("Failed to register manipulator")
+    #     raise
 
     try:
         OpenMayaRender.MDrawRegistry.registerDrawOverrideCreator(kDrawDbClassification, kDrawRegistrantId,

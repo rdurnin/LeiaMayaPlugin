@@ -111,11 +111,11 @@ class LeiaCamera(object):
 
         lcam._nearZ = -(max(0.0, lcam._baseline * focalDistance / (lcam._baseline + lcam._disparityLimit)))
         lcam._nearHalfWidth = 25.4 * horizontalFilmAperture * lcam._nearZ / (2.0 * focalLength)
-        lcam._nearHalfHeight = lcam._screenHalfWidth / (screenWidth / screenHeight)
+        lcam._nearHalfHeight = lcam._nearHalfWidth / (screenWidth / screenHeight)
 
         lcam._farZ = -(lcam._baseline * focalDistance / (lcam._baseline - lcam._disparityLimit) if (lcam._baseline > lcam._disparityLimit) else 20000.0)
         lcam._farHalfWidth = 25.4 * horizontalFilmAperture * lcam._farZ / (2.0 * focalLength)
-        lcam._farHalfHeight = lcam._screenHalfWidth / (screenWidth / screenHeight)
+        lcam._farHalfHeight = lcam._farHalfWidth / (screenWidth / screenHeight)
 
         return lcam
 
